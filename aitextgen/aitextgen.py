@@ -699,7 +699,7 @@ class aitextgen:
         # use the DeepSpeed plugin if installed and specified
         plugins = []
         if is_gpu_used and use_deepspeed:
-            deepspeed_plugin =  pytorch_lightning.plugins.DeepSpeedPlugin()
+            deepspeed_plugin = pl.strategies.DeepSpeedStrategy()
             logger.info("Using DeepSpeed training.")
             if not fp16:
                 logger.info("Setting FP16 to True for DeepSpeed ZeRO Training.")
