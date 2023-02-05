@@ -11,8 +11,10 @@ from transformers import get_linear_schedule_with_warmup
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks.progress import ProgressBarBase
-from pytorch_lightning.utilities import _TPU_AVAILABLE
 
+# FIXME: What should this be? Without it, training on eg. Google probably won't work.
+#from pytorch_lightning.utilities import _TPU_AVAILABLE
+_TPU_AVAILABLE = False
 
 class ATGTransformer(pl.LightningModule):
     """
@@ -148,8 +150,8 @@ class ATGProgressBar(ProgressBarBase):
         items.pop("v_num", None)
         return items
 
-    def on_batch_end(self, trainer, pl_module):
-        super().on_batch_end(trainer, pl_module)
+    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
+        super().on_train_batch_end(trainer, pl_module, outputs, batch, batch_idx)
 
         # clean up the GPU cache used for the benchmark
         # https://discuss.pytorch.org/t/about-torch-cuda-empty-cache/34232/4

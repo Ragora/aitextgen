@@ -11,7 +11,6 @@ from typing import List, Optional, Union
 import pytorch_lightning as pl
 import torch
 from pkg_resources import resource_filename
-from pytorch_lightning.plugins import DeepSpeedPlugin
 from tqdm.auto import trange
 from transformers import (
     AutoConfig,
@@ -262,7 +261,8 @@ class aitextgen:
                         {"additional_special_tokens": ["<|endoftext|>"]}
                     )
 
-        self.tokenizer.padding_side = "left"
+        # FIXME: Might variate somehow?
+        self.tokenizer.padding_side = "right"
 
         if to_gpu:
             if to_fp16:
@@ -698,7 +698,7 @@ class aitextgen:
         # use the DeepSpeed plugin if installed and specified
         deepspeed_plugin = None
         if is_gpu_used and use_deepspeed:
-            deepspeed_plugin = DeepSpeedPlugin()
+            deepspeed_plugin = pl.strategies.DeepSpeedStrategy()
             logger.info("Using DeepSpeed training.")
             if not fp16:
                 logger.info("Setting FP16 to True for DeepSpeed ZeRO Training.")
@@ -737,7 +737,6 @@ class aitextgen:
 
         if tpu_cores > 0:
             train_params["tpu_cores"] = tpu_cores
-            train_params["gpus"] = 0
             n_gpu = 0
 
         # benchmark gives a boost for GPUs if input size is constant,
@@ -747,6 +746,14 @@ class aitextgen:
 
         if n_gpu > 1:
             train_params["distributed_backend"] = "ddp"
+
+        # Set expected CPU trainer parameters
+        if n_gpu < 1:
+            train_params["accelerator"] = "cpu"
+            train_params["devices"] = 1
+        else:
+            train_params["accelerator"] = "gpu"
+            train_params["devices"] = n_gpu
 
         trainer = pl.Trainer(**train_params)
         trainer.fit(train_model)
