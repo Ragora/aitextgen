@@ -78,7 +78,7 @@ class TokenDataset(Dataset):
         self.line_by_line = False
 
         # Special case; load tokenized texts immediately
-        if tokenized_texts:
+        if tokenized_texts is not False:
             self.tokens = tokenized_texts
             self.num_subsets = np.shape(self.tokens)[0] - block_size
             self.block_size = block_size
@@ -451,4 +451,5 @@ def merge_datasets(datasets: List[TokenDataset], equalize: bool = True) -> Token
         else:
             tokenized_texts.extend(dataset.tokens)
 
-    return TokenDataset(tokenized_texts=tokenized_texts, block_size=block_size)
+    # FIXME: Should this be 16 with fp16?
+    return TokenDataset(tokenized_texts=np.array(tokenized_texts, dtype=np.float32), block_size=block_size)
