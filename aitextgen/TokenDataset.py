@@ -80,7 +80,7 @@ class TokenDataset(Dataset):
         # Special case; load tokenized texts immediately
         if tokenized_texts:
             self.tokens = tokenized_texts
-            self.num_subsets = self.tokens.shape[0] - block_size
+            self.num_subsets = np.shape(self.tokens)[0] - block_size
             self.block_size = block_size
             self.file_path = "merged TokenDataset"
             self.str_suffix = "by merging TokenDatasets."
