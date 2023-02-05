@@ -697,18 +697,20 @@ class aitextgen:
             n_gpu = 1
 
         # use the DeepSpeed plugin if installed and specified
-        #deepspeed_plugin = None
-        #if is_gpu_used and use_deepspeed:
-        #    deepspeed_plugin = pytorch_lightning.plugins.MixedPrecisionPlugin()
-        #    logger.info("Using DeepSpeed training.")
-        #    if not fp16:
-        #        logger.info("Setting FP16 to True for DeepSpeed ZeRO Training.")
-        #        fp16 = True
+        plugins = []
+        if is_gpu_used and use_deepspeed:
+            deepspeed_plugin =  pytorch_lightning.plugins.DeepSpeedPlugin()
+            logger.info("Using DeepSpeed training.")
+            if not fp16:
+                logger.info("Setting FP16 to True for DeepSpeed ZeRO Training.")
+                fp16 = True
 
-        fp_plugin = None
+            plugins.append(deepspeed_plugin)
+
         if fp16:
             # Use MixedPrecisionPlugin if fp16 is requested
             fp_plugin = pytorch_lightning.plugins.MixedPrecisionPlugin(device="cuda", precision=16)
+            plugins.append(fp_plugin)
 
         train_params = dict(
             accumulate_grad_batches=gradient_accumulation_steps,
@@ -733,7 +735,7 @@ class aitextgen:
                     num_layers_freeze,
                 )
             ],
-            plugins=fp_plugin,
+            plugins=plugins,
         )
 
         if fp16:
