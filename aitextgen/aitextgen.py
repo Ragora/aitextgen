@@ -9,6 +9,7 @@ from random import randint
 from typing import List, Optional, Union
 
 import pytorch_lightning as pl
+import pytorch_lightning.plugins
 import torch
 from pkg_resources import resource_filename
 from tqdm.auto import trange
@@ -696,13 +697,18 @@ class aitextgen:
             n_gpu = 1
 
         # use the DeepSpeed plugin if installed and specified
-        deepspeed_plugin = None
-        if is_gpu_used and use_deepspeed:
-            deepspeed_plugin = pl.strategies.DeepSpeedStrategy()
-            logger.info("Using DeepSpeed training.")
-            if not fp16:
-                logger.info("Setting FP16 to True for DeepSpeed ZeRO Training.")
-                fp16 = True
+        #deepspeed_plugin = None
+        #if is_gpu_used and use_deepspeed:
+        #    deepspeed_plugin = pytorch_lightning.plugins.MixedPrecisionPlugin()
+        #    logger.info("Using DeepSpeed training.")
+        #    if not fp16:
+        #        logger.info("Setting FP16 to True for DeepSpeed ZeRO Training.")
+        #        fp16 = True
+
+        fp_plugin = None
+        if fp16:
+            # Use MixedPrecisionPlugin if fp16 is requested
+            fp_plugin = pytorch_lightning.plugins.MixedPrecisionPlugin(device="cuda", precision=16)
 
         train_params = dict(
             accumulate_grad_batches=gradient_accumulation_steps,
@@ -727,13 +733,11 @@ class aitextgen:
                     num_layers_freeze,
                 )
             ],
-            plugins=deepspeed_plugin,
+            plugins=fp_plugin,
         )
 
         if fp16:
             train_params["precision"] = 16 if fp16 else 32
-            train_params["amp_level"] = fp16_opt_level
-            train_params["amp_backend"] = "apex"
 
         if tpu_cores > 0:
             train_params["tpu_cores"] = tpu_cores
