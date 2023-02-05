@@ -699,13 +699,12 @@ class aitextgen:
         # use the DeepSpeed plugin if installed and specified
         plugins = []
         if is_gpu_used and use_deepspeed:
-            deepspeed_plugin = pl.strategies.DeepSpeedStrategy()
             logger.info("Using DeepSpeed training.")
             if not fp16:
                 logger.info("Setting FP16 to True for DeepSpeed ZeRO Training.")
                 fp16 = True
-
-            plugins.append(deepspeed_plugin)
+        else:
+            use_deepspeed = False
 
         if fp16:
             # Use MixedPrecisionPlugin if fp16 is requested
@@ -716,6 +715,7 @@ class aitextgen:
             accumulate_grad_batches=gradient_accumulation_steps,
             gpus=n_gpu,
             max_steps=num_steps,
+            strategy = "deepspeed" if use_deepspeed else None,
             gradient_clip_val=max_grad_norm,
             enable_checkpointing=False, #checkpoint_callback deprecated in pytorch_lighning v1.7
             logger=loggers if loggers else False,
