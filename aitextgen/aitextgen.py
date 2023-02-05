@@ -262,7 +262,7 @@ class aitextgen:
                     )
 
         # FIXME: Might variate somehow?
-        self.tokenizer.padding_side = "right"
+        self.tokenizer.padding_side = "left"
 
         if to_gpu:
             if to_fp16:
